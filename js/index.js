@@ -1,14 +1,14 @@
 
-const WMSCapabilities = ol.format.WMSCapabilities;
-const parser = new WMSCapabilities();
+import { parseCapabilities } from "./capabilities-parser.js";
+import * as CapabilitiesEntry from "./capabilities-entry.js";
+import * as CapabilitiesPhaseSelector from "./capabilities-phase-selector.js";
+import { clearChildElements, populateDropdown } from "./html-util.js";
 
 /////////////////////////////////////////////////////////////////////////////////////
 //
 //      Get handles to all the ui components
 //
 /////////////////////////////////////////////////////////////////////////////////////
-const capabilitiesUrlButton = document.getElementById("capabilities-url-button");
-const capabilitiesUrlInput = document.getElementById("capabilities-url-input");
 const layerDropdown = document.getElementById("layer-dropdown");
 const imageGetButton = document.getElementById("image-get-button");
 const outputImage = document.getElementById("layer-image");
@@ -19,25 +19,21 @@ const outputImage = document.getElementById("layer-image");
 //      Application State
 //
 /////////////////////////////////////////////////////////////////////////////////////
-let formats = [];
-let layers = [];
-let baseUrl = "";
 
+let baseUrl = "";
+let capabilities = {};
 
 /////////////////////////////////////////////////////////////////////////////////////
 //
 //      Event Handlers
 //
 /////////////////////////////////////////////////////////////////////////////////////
-capabilitiesUrlButton.onclick = function() {
-    baseUrl = capabilitiesUrlInput.value.split("?")[0];
-    console.log("baseUrl: " + baseUrl);
-    loadCapabilities(capabilitiesUrlInput.value);
-};
+
+CapabilitiesEntry.registerCallback(loadCapabilities);
 
 imageGetButton.onclick = function() {
     const index = Number.parseInt(layerDropdown.value);
-    const layer = layers[index];
+    const layer = capabilities.layers[index];
     requestImage(layer);
 };
 
@@ -48,32 +44,30 @@ imageGetButton.onclick = function() {
 //
 /////////////////////////////////////////////////////////////////////////////////////
 function loadCapabilities(capabilitiesUrl) {
+    baseUrl = capabilitiesUrl.split("?")[0];
+    console.log("base url: " + baseUrl);
+    console.log("full capabilities url: ", capabilitiesUrl, "\n\n");
+
+    clearChildElements(layerDropdown);
 
     fetch(capabilitiesUrl)
     .then(response => response.text())
-    .then(xmlText => parser.read(xmlText))
-    .then(capabilities => {
-        console.log(capabilities);
-        formats = capabilities.Capability.Request.GetMap.Format;
-        layers = capabilities.Capability.Layer.Layer;
-        layers.forEach((layer, index) => {
-            layerDropdown.appendChild(createDropdownOption(layer.Name, index));
-        });
-    });
+    .then(xmlText => parseCapabilities(xmlText))
+    .then(parsedCapabilities => {
+        capabilities = parsedCapabilities;
+        console.log("capabilies:\n", capabilities, "\n\n");
+        populateDropdown(layerDropdown, capabilities.layers.map(item => item.Name));
+    })
+    .catch(error => console.log("error:\n", error, "\n\n"));
 }
 
 
-function createDropdownOption(name, index) {
-    const option = document.createElement("option");
-    option.innerHTML = name;
-    option.value = index;
-    return option;
-}
+
 
 function requestImage(layer) {
-    // Added the follwoing line because some layers do not seem to have a style element.
+    // Added the following line because some layers do not seem to have a style element.
     // In those cases, just setting style to "default" seems to be working.
-    // Try to find out if this is the correct approach when no style element is present.
+    // TODO: Try to find out if this is the correct approach when no style element is present.
     const style = layer.Style ? layer.Style[0].Name : "default";
 
     // The way we are requesting and displaying the image (for now) is by forming the url
@@ -86,8 +80,8 @@ function requestImage(layer) {
     url += `&BBOX=${layer.BoundingBox[0].extent.join(",")}`;
     url += `&WIDTH=1000`;
     url += `&HEIGHT=500`;
-    url += `&FORMAT=${formats[0]}`;
+    url += `&FORMAT=${capabilities.formats[0]}`;
 
-    console.log("url: " + url);
+    console.log("image url: ", url, "\n\n");
     outputImage.src = url;
 }

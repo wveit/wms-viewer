@@ -5,16 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WMS Viewer</title>
     <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/build/ol.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/index.css">
 </head>
 <body>
-    <h1>WMS Viewer</h1>
-    <input type="text" id="capabilities-url-input" value="https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?version=1.3&request=getCapabilities&service=WMS">
-    <button id="capabilities-url-button">Load Capabilities</button>
-    <hr>
-    <select id="layer-dropdown"></select>
-    <button id="image-get-button">Get Image</button>
-    <hr>
-    <img src="default-map.jpg" id="layer-image">
-    <script src="index.js"></script>
+
+    <div id="map">
+        <img src="default-map.jpg" id="layer-image">
+    </div>
+
+    <div id="navigation-window">
+        <h1>WMS Viewer</h1>
+        <ul id="phase-menu">
+            <li id="capabilities-entry-tab">Capabilities Entry</li>
+            <li id="layer-selection-tab">Layer Selection</li>
+            <li id="active-layers-tab">Active Layers</li>
+        </ul>
+
+        <div id="capabilities-phase">
+            <div id="capabilities-mode-selection">
+                <label>
+                    <input type="radio" id="capabilities-entry-radio-button" name="capabilities-entry-mode" value="enter-capabilities" checked>
+                    Enter Capabilities URL
+                </label>
+                <label>
+                    <input type="radio" id="favorite-capabilities-radio-button" name="capabilities-entry-mode" value="favorite-capabilities">
+                    Favorite Capabilities URLs
+                </label>
+            </div>
+
+            <div id="capabilities-entry-view">
+                <h3>Enter a Capabilities URL:</h3>
+                <input type="text" id="capabilities-url-input" placeholder="Enter Capabilities URL here">
+                <button id="capabilities-entry-load-button">Load Capabilities</button>
+                <button id="capabilities-entry-add-favorite-button">Add to Favorites</button>
+            </div>
+
+            <div id="favorite-capabilities-view">
+                <h3>Favorite Capabilities URLs:</h3>
+                <ul id="favorite-capabilities-url-list"></ul>
+            </div>
+        </div>
+
+        <div id="layer-selection-phase">
+            <h3>Layer Selection!</h3>
+            <select id="layer-dropdown"></select>
+            <button id="image-get-button">Get Image</button>
+        </div>
+
+        <div id="active-layers-phase">
+            <h3>Active Layers!</h3>
+        </div>
+    </div>
+
+
+    <div id="date-selector"></div>
+
+
+
+    <script type="module" src="js/index.js"></script>
 </body>
 </html>
